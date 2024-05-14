@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.25;
 
+import "./interfaces/IUniswapV2Pair.sol";
 import "./UniswapV2ERC20.sol";
 import "./libraries/Math.sol";
 import "./libraries/UQ112x112.sol";
 import "./interfaces/IERC20.sol";
+import "./interfaces/IUniswapV2Factory.sol";
+import "./interfaces/IUniswapV2Callee.sol";
 
 //Uniswap配对合约
 contract UniswapV2Pair is UniswapV2ERC20 {
@@ -127,7 +130,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
    */
   function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) private {
     //确认余额0和余额1小于等于最大的uint112
-    require(balance0 <= uint112(-1) && balance1 <= uint112(-1), "UniswapV2: OVERFLOW");
+    require(balance0 <= type(uint112).max && balance1 <= type(uint112).max, "UniswapV2: OVERFLOW");
     //区块时间戳,将时间戳转换为uint32
     //solium-disable-next-line
     uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);
