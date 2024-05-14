@@ -1,7 +1,7 @@
 pragma solidity ^0.8.13;
 
 import { Test, console } from "forge-std/Test.sol";
-import { RFTToken } from "../../../src/day4/RFTToken.sol";
+import { RFTToken } from "../../../src/week4/day4/RFTToken.sol";
 import { WETH9 } from "../../../src/week5/day1/WETH.sol";
 import { UniswapV2Factory } from "../../../src/week5/day1/UniswapV2Factory.sol";
 import { UniswapV2Router01 } from "../../../src/week5/day1/online.sol";

@@ -2,8 +2,8 @@ pragma solidity ^0.8.13;
 
 import { Test, console } from "forge-std/Test.sol";
 
-import { RFTToken } from "../../../src/day4/RFTToken.sol";
-import { RenftIDO } from "../../../src/day4/RFTIDO.sol";
+import { RFTToken } from "../../../src/week4/day4/RFTToken.sol";
+import { RenftIDO } from "../../../src/week4/day4/RFTIDO.sol";
 
 contract RenftIDOTest is Test {
   RFTToken rftToken;
