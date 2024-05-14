@@ -28,6 +28,10 @@ contract MyDex {
   address public factory; // uniswap factory contract address
   address public WETH; // WETH contract address
 
+  event SellETHSuccess(address indexed user, address indexed token, uint256 minBuyAmount);
+
+  event BuyETHSuccess(address indexed user, address indexed sellToken, uint256 sellAmount, uint256 minBuyAmount);
+
   constructor(address factory_, address WETH_) {
     factory = factory_;
     WETH = WETH_;
@@ -44,6 +48,8 @@ contract MyDex {
     path[0] = WETH;
     path[1] = buyToken;
     _swapExactETHForTokens(minBuyAmount, path, msg.sender);
+
+    emit SellETHSuccess(msg.sender, buyToken, minBuyAmount);
   }
 
   /**
@@ -57,6 +63,8 @@ contract MyDex {
     path[0] = sellToken;
     path[1] = WETH;
     _swapExactTokensForETH(sellAmount, minBuyAmount, path, msg.sender);
+
+    emit BuyETHSuccess(msg.sender, sellToken, sellAmount, minBuyAmount);
   }
 
   //================================
