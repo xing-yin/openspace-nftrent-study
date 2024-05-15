@@ -9,13 +9,9 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
  * @title KK Token
  */
 contract KKToken is Ownable, ERC20 {
-  address public owner;
+  constructor(address initialOwner) Ownable(initialOwner) ERC20("KKToken", "KT") { }
 
-  constructor() ERC20("KKToken", "KT") {
-    owner = msg.sender;
-  }
-
-  function mint(address to, uint256 amount) external {
+  function mint(address to, uint256 amount) external onlyOwner {
     _mint(to, amount);
   }
 }

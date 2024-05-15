@@ -31,8 +31,12 @@ contract StakingPool {
     uint256 lastBlockNumber; // 用户上次更新奖励的区块号
   }
 
+  //==============================================================================
+  //========================= variable ===========================================
+  //==============================================================================
+
   uint256 public constant REWARD_KK_TOKEN_PER_BLOCK = 10; // 每一个区块产出 10 个 KK token
-  uint256 public constant REWARD_PERCISION = 1e18; // 奖励的精度,防止过小
+  uint256 public constant REWARD_PERCISION = 1e19; // 奖励的精度,防止过小
 
   uint256 public totalStakedAmount; // 总质押量（ETH）
   mapping(address => uint256) public userStake; // 用户质押的 ETH 数量
@@ -108,8 +112,9 @@ contract StakingPool {
    * @param account 质押账户
    * @return 待领取的 KK Token 收益
    */
-  function earned(address account) public view returns (uint256) {
+  function earned(address account) public returns (uint256) {
     UserReward memory userReward = accumulatedUserRewards[account];
+    _updateGlobalRewardsPerToken();
     GlobalRewardsPerToken memory globalRewardsPerToken_ = _caculateGlobalRewardsPerToken(globalRewardsPerToken);
     return userReward.accumulateRewards
       + _calculateUserRewards(account, globalRewardsPerToken_.accumulatededRewardsPerToken, userReward.accumulateRewards);
@@ -122,7 +127,6 @@ contract StakingPool {
     // update rewards
     UserReward memory userReward = _updateRewards(user);
     uint256 rewards = userReward.accumulateRewards;
-
     accumulatedUserRewards[user].accumulateRewards = 0;
 
     // transfer kk token to user for rewards
@@ -143,7 +147,7 @@ contract StakingPool {
 
     // calculate and update user new rewards
     userReward.accumulateRewards += _calculateUserRewards(
-      user, userReward.lastAccumulatedRewardsPerToken, globalRewardsPerTokenNew.accumulatededRewardsPerToken
+      user, globalRewardsPerTokenNew.accumulatededRewardsPerToken, userReward.lastAccumulatedRewardsPerToken
     );
     userReward.lastAccumulatedRewardsPerToken = globalRewardsPerTokenNew.accumulatededRewardsPerToken;
     userReward.lastBlockNumber = globalRewardsPerTokenNew.lastBlockNumber;
@@ -157,9 +161,9 @@ contract StakingPool {
   function _calculateUserRewards(
     address user,
     uint256 currentAccumulatedRewardsPerToken,
-    uint256 accumulatededRewardsPerToken
+    uint256 lastAccumulatededRewardsPerToken
   ) internal view returns (uint256) {
-    return userStake[user] * (currentAccumulatedRewardsPerToken - accumulatededRewardsPerToken) / REWARD_PERCISION;
+    return userStake[user] * (currentAccumulatedRewardsPerToken - lastAccumulatededRewardsPerToken) / REWARD_PERCISION;
   }
 
   function _updateGlobalRewardsPerToken() internal returns (GlobalRewardsPerToken memory) {
@@ -196,8 +200,7 @@ contract StakingPool {
 
     // calculte and update current accumulatededRewardsPerToken
     globalRewardsPerTokenOut.accumulatededRewardsPerToken += REWARD_PERCISION * REWARD_KK_TOKEN_PER_BLOCK
-      * (currentBlockNumber - globalRewardsPerTokenOut.lastBlockNumber) / totalStakedAmount; // 为了确保精度，先乘以 1e18
-
+      * (currentBlockNumber - globalRewardsPerTokenOut.lastBlockNumber) / totalStakedAmount; // 为了确保精度，先乘以 1e19
     // update curent blockNumber
     globalRewardsPerTokenOut.lastBlockNumber = currentBlockNumber;
 
