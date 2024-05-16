@@ -11,17 +11,6 @@ import "./RFTToken.sol";
 // - 预售结束后，如果没有达到募集目标，则用户可领会退款；
 // - 预售成功，用户可领取 Token，且项目方可提现募集的ETH；
 contract RenftIDO {
-  // // 事件：预售开始
-  // event Started(uint256 start, uint256 end);
-  // // 事件：预售结束
-  // event Ended(uint256 raised, uint256 sold);
-  // // 事件：用户支付ETH
-  // event Paid(address indexed user, uint256 amount);
-  // // 事件：用户领取Token
-  // event Claimed(address indexed user, uint256 amount);
-  // // 事件：用户领取ETH
-  // event Refunded(address indexed user, uint256 amount);
-
   modifier onlyOwner() {
     require(msg.sender == owner, "RenftIDO: only owner can call");
     _;
@@ -34,7 +23,11 @@ contract RenftIDO {
   }
 
   // 预售开始事件
-  event RenftIDO_Start(address indexed owner, address indexed token);
+  event RenftIDO_Start(address indexed user, address indexed token);
+  event RenftIDO_User_Presale(address indexed user, uint256 amount);
+  event RenftIDO_Refund(address indexed user, uint256 amount);
+  event RenftIDO_Claimed(address indexed user, uint256 amount);
+  event RenftIDO_Withdraw(address indexed user, uint256 amount);
 
   // ERC20
   IERC20 public erc20Token;
@@ -69,9 +62,6 @@ contract RenftIDO {
   // 是否已经开始预售
   bool public isStartIDO;
 
-  // 记录用户数
-  uint256 public userSize;
-
   constructor(address _token) {
     erc20Token = IERC20(_token);
     owner = msg.sender;
@@ -96,7 +86,6 @@ contract RenftIDO {
     end_time = block.timestamp + _duration;
     isStartIDO = true;
 
-    // 触发预售开始事件
     emit RenftIDO_Start(msg.sender, address(erc20Token));
   }
 
@@ -121,12 +110,10 @@ contract RenftIDO {
     totalRaisedAmount += msg.value;
 
     // 更新用户的余额
-    balances[msg.sender] += amount;
+    address user = msg.sender;
+    balances[user] += amount;
 
-    //如果用户不存在，则用户数+1
-    if (balances[msg.sender] == 0) {
-      userSize++;
-    }
+    emit RenftIDO_User_Presale(user, amount);
   }
 
   // 预售结束后，如果没有达到募集目标，则用户可领回退款
@@ -144,13 +131,15 @@ contract RenftIDO {
     // 给用户退款
     uint256 amount = balances[user];
     balances[user] = 0;
-    payable(msg.sender).transfer(amount * price);
+    payable(user).transfer(amount * price);
 
     // 总的销售数量减少
     totalSoldCount -= amount;
 
     // 总募资金额减少
     totalRaisedAmount -= amount * price;
+
+    emit RenftIDO_Refund(user, amount);
   }
 
   // 预售成功，用户可领取 Token
@@ -172,14 +161,16 @@ contract RenftIDO {
     uint256 amount = balances[sender];
     erc20Token.transfer(sender, amount);
 
-    // 达到硬顶，将多余的部分退回给用户,平均分超出部分
+    // 达到硬顶，将多余的部分退回给用户,按照用户投入的比例瓜分超出部分
     if (totalRaisedAmount > hardCap) {
-      uint256 refundAmount = (totalRaisedAmount - hardCap) / userSize;
+      uint256 refundAmount = (totalRaisedAmount - hardCap) * (balances[sender] / totalRaisedAmount);
       payable(sender).transfer(refundAmount);
     }
 
     // 更新用户已领取状态
     userClaimed[sender] = true;
+
+    emit RenftIDO_Claimed(sender, amount);
   }
 
   // 项目方提现募集的ETH
@@ -191,7 +182,10 @@ contract RenftIDO {
     require(totalRaisedAmount >= softCap, "RenftIDO: fundraising fail");
 
     // 项目方提现
-    payable(owner).transfer(address(this).balance);
+    uint256 withdrawAmount = address(this).balance;
+    payable(owner).transfer(withdrawAmount);
+
+    emit RenftIDO_Withdraw(owner, address(this).balance);
   }
 
   function getUserBalance(address user) external returns (uint256) {
