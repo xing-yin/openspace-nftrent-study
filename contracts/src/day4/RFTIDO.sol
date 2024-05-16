@@ -84,8 +84,8 @@ contract RenftIDO {
     require(_price > 0, "price must be greater than 0");
     // - 软顶小于硬顶
     require(_softCap < _hardCap, "softCap must be less than hardCap");
-    // - 当前合约的有足够的 token 大于等于 _softCap/_price （_token 需要将足够的 token 转移到当前合约）
-    require(erc20Token.balanceOf(address(this)) >= _softCap / _price, "not enough token");
+    // - 当前合约的有足够的 token 大于等于 hardCap/_price （_token 需要将足够的 token 转移到当前合约）
+    require(erc20Token.balanceOf(address(this)) >= hardCap / _price, "not enough token");
     // - 时间大于0
     require(_duration > 0, "duration must be greater than 0");
 
@@ -112,7 +112,7 @@ contract RenftIDO {
     require(totalSoldCount + amount <= erc20Token.totalSupply(), "RenftIDO:exceed totalSupply");
 
     // 检查当前预售后不超过募集上限
-    require(totalRaisedAmount + amount <= hardCap, "RenftIDO:exceed hardCap");
+    require(totalRaisedAmount + amount * price <= hardCap, "RenftIDO:exceed hardCap");
 
     // 更新已募集的数量
     totalSoldCount += amount;
